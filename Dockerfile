@@ -1,6 +1,7 @@
 FROM node:20
-COPY ./ /app
 WORKDIR /app
-RUN npm install -g pnpm
-RUN pnpm config set registry https://registry.npmmirror.com
-RUN pnpm install && pm2 start app.js
+COPY package.json .
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["npm", "start"]
