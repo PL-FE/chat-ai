@@ -22,12 +22,17 @@ app.post('/chat', async (req, res) => {
     });
     const openai = new OpenAIApi(configuration);
 
-    const chatCompletion = await openai.createChatCompletion({
-        model: model || "gpt-3.5-turbo",
-        messages: [{ role: "user", content }],
-        ...args
-    });
-    res.send(chatCompletion.data.choices[0].message.content);
+    try {
+        const chatCompletion = await openai.createChatCompletion({
+            model: model || "gpt-3.5-turbo",
+            messages: [{ role: "user", content }],
+            ...args
+        });
+        res.send(chatCompletion.data.choices[0].message.content);
+    } catch (error) {
+        console.log('error', error);
+        res.send(error);
+    }
 });
 
 // 监听端口，启动服务
