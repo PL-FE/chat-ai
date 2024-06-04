@@ -10,6 +10,9 @@ const port = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
+app.get('/', (req, res) => {
+    res.send('Hello, World!');
+});
 // 设置路由，当访问根路径时返回Hello World!
 app.post('/chat', async (req, res) => {
     const { content, model, ...args } = req.body
