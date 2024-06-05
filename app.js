@@ -9,13 +9,16 @@ const port = 3000;
 // 允许所有跨域请求
 app.use(cors());
 app.use(bodyParser.json());
+app.use(bodyParser.text({ type: 'text/event-stream' }));
 
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
 // 设置路由，当访问根路径时返回Hello World!
-app.post('/chat', async (req, res) => {
-    const { content, model, ...args } = req.body
+app.get('/chat', async (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    const { content } = req.query
     const configuration = new Configuration({
         apiKey: "sk-TOeD9h9FTt9jumXYF790Eb035d654164865441Cd238b0d6e",
         basePath: "https://api.gpt.ge/v1"
@@ -23,12 +26,25 @@ app.post('/chat', async (req, res) => {
     const openai = new OpenAIApi(configuration);
 
     try {
-        const chatCompletion = await openai.createChatCompletion({
-            model: model || "gpt-3.5-turbo",
+        const completion = await openai.createChatCompletion({
+            stream: true,
+            model: "gpt-3.5-turbo",
             messages: [{ role: "user", content }],
-            ...args
+        }, { responseType: 'stream' });
+        // 监听事件
+        completion.data.on('data', (chunk) => {
+            const chunkRes = chunk.toString()
+            if (chunkRes === 'data: [DONE]') {
+                res.end()
+            } else {
+                res.write(chunkRes)
+            }
         });
-        res.send(chatCompletion.data.choices[0].message.content);
+        completion.data.on('end', () => {
+            res.end()
+        })
+
+
     } catch (error) {
         console.log('error', error);
         res.send(error);
